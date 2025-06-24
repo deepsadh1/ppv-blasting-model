@@ -8,19 +8,29 @@ model = joblib.load("final_xgboost_model.pkl")
 # Page config
 st.set_page_config(page_title="PPV Prediction | IIT BHU", layout="centered")
 
-# Background and logo
+# Custom styles: background + logo + fonts
 st.markdown("""
     <style>
     .stApp {
         background-image: url('https://raw.githubusercontent.com/deepsadh1/ppv-blasting-model/main/background_image.jpg');
         background-size: cover;
         background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        color: white;
     }
-    .logo {
+    h1, h2, h3, h4, h5, h6, .stTextInput label, .stSelectbox label, .stNumberInput label {
+        color: white !important;
+    }
+    .logo-container {
         position: absolute;
-        top: 20px;
-        right: 20px;
-        width: 120px;
+        top: 15px;
+        right: 25px;
+        z-index: 100;
+    }
+    .logo-container img {
+        width: 100px;
+        height: auto;
     }
     .indicator {
         font-size: 1.2rem;
@@ -52,8 +62,8 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Title
-st.markdown("<h1 style='text-align: center;'> Peak Particle Velocity Prediction</h1>", unsafe_allow_html=True)
+# Title and Subtitle
+st.markdown("<h1 style='text-align: center;'>💥 Peak Particle Velocity Prediction</h1>", unsafe_allow_html=True)
 st.subheader("XGBoost-Based Blasting Evaluation Model")
 
 # Inputs
@@ -90,11 +100,12 @@ if st.button("🧠 Predict PPV"):
         safety_html = '<div class="indicator danger">🔴 Danger Zone (PPV > 10 mm/s)</div>'
 
     st.markdown(safety_html, unsafe_allow_html=True)
-    st.markdown("""
+
+# Footer
+st.markdown("""
 <hr style="margin-top:50px;">
 <div style="text-align:center;color:gray;font-size:0.9em">
     Built with ❤️ by <b>IIT BHU</b> Mining Engineering <br>
     Powered by Streamlit + XGBoost
 </div>
 """, unsafe_allow_html=True)
-
