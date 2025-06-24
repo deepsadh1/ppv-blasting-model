@@ -8,29 +8,15 @@ model = joblib.load("final_xgboost_model.pkl")
 # Page config
 st.set_page_config(page_title="PPV Prediction | IIT BHU", layout="centered")
 
-# Custom styles: background + logo + fonts
+# Custom styles for white background and black font
 st.markdown("""
     <style>
     .stApp {
-        background-image: url('https://raw.githubusercontent.com/deepsadh1/ppv-blasting-model/main/background_image.jpg');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-        color: white;
+        background: white;
+        color: black;
     }
     h1, h2, h3, h4, h5, h6, .stTextInput label, .stSelectbox label, .stNumberInput label {
-        color: white !important;
-    }
-    .logo-container {
-        position: absolute;
-        top: 15px;
-        right: 25px;
-        z-index: 100;
-    }
-    .logo-container img {
-        width: 100px;
-        height: auto;
+        color: black !important;
     }
     .indicator {
         font-size: 1.2rem;
@@ -53,13 +39,6 @@ st.markdown("""
         color: #721c24;
     }
     </style>
-""", unsafe_allow_html=True)
-
-# IIT BHU Logo
-st.markdown("""
-    <div class="logo-container">
-        <img src="https://raw.githubusercontent.com/deepsadh1/ppv-blasting-model/main/iit_bhu_logo.png">
-    </div>
 """, unsafe_allow_html=True)
 
 # Title and Subtitle
