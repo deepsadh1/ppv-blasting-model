@@ -49,7 +49,7 @@ st.markdown("""
 st.markdown('<img src="iit_bhu_logo.png" class="logo">', unsafe_allow_html=True)
 
 # Title
-st.markdown("<h1 style='text-align: center;'>💥 Peak Particle Velocity Prediction</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'> Peak Particle Velocity Prediction</h1>", unsafe_allow_html=True)
 st.subheader("XGBoost-Based Blasting Evaluation Model")
 
 # Inputs
