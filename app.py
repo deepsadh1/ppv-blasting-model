@@ -12,7 +12,7 @@ st.set_page_config(page_title="PPV Prediction | IIT BHU", layout="centered")
 st.markdown("""
     <style>
     .stApp {
-        background-image: url('background_image.jpg');
+        background-image: url('https://raw.githubusercontent.com/deepsadh1/ppv-blasting-model/main/background_image.jpg');
         background-size: cover;
         background-position: center;
     }
@@ -46,7 +46,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # IIT BHU Logo
-st.markdown('<img src="iit_bhu_logo.png" class="logo">', unsafe_allow_html=True)
+st.markdown("""
+    <div class="logo-container">
+        <img src="https://raw.githubusercontent.com/deepsadh1/ppv-blasting-model/main/iit_bhu_logo.png">
+    </div>
+""", unsafe_allow_html=True)
 
 # Title
 st.markdown("<h1 style='text-align: center;'> Peak Particle Velocity Prediction</h1>", unsafe_allow_html=True)
