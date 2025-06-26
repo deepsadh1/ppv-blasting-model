@@ -1,20 +1,38 @@
 import streamlit as st
-import numpy as np
 import pandas as pd
+import numpy as np
 import joblib
+from io import BytesIO
 
-# Load the model
+# Load the trained XGBoost model
 model = joblib.load("final_xgboost_model.pkl")
 
-# Page config
+# Streamlit page setup
 st.set_page_config(page_title="PPV Prediction | IIT BHU", layout="centered")
+
+# Custom CSS
+st.markdown("""
+    <style>
+    .indicator {
+        font-size: 1.2rem;
+        font-weight: bold;
+        padding: 0.5rem;
+        border-radius: 5px;
+        text-align: center;
+        width: 100%;
+    }
+    .safe { background-color: #d4edda; color: #155724; }
+    .moderate { background-color: #fff3cd; color: #856404; }
+    .danger { background-color: #f8d7da; color: #721c24; }
+    </style>
+""", unsafe_allow_html=True)
 
 # Title
 st.markdown("<h1 style='text-align: center;'>💥 Peak Particle Velocity Prediction</h1>", unsafe_allow_html=True)
 st.subheader("XGBoost-Based Blasting Evaluation Model")
 
-# --- SINGLE INPUT PREDICTION ---
-st.markdown("### 🔍 Predict from Single Input")
+# ----------- Manual Input Section -----------
+st.markdown("### 🎯 Predict for a Single Input")
 
 distance = st.number_input("📝 Distance from Blast (m)", min_value=1.0, value=100.0)
 charge = st.number_input("💣 Charge per Delay (kg)", min_value=1.0, value=50.0)
@@ -43,69 +61,56 @@ if st.button("🧠 Predict PPV"):
         safety_html = '<div class="indicator moderate">🟠 Moderate Risk (5 ≤ PPV ≤ 10 mm/s)</div>'
     else:
         safety_html = '<div class="indicator danger">🔴 Danger Zone (PPV > 10 mm/s)</div>'
+    st.markdown(safety_html, unsafe_allow_html=True)
 
-    st.markdown(f"""
-        <style>
-        .indicator {{
-            font-size: 1.2rem;
-            font-weight: bold;
-            padding: 0.5rem;
-            border-radius: 5px;
-            text-align: center;
-        }}
-        .safe {{ background-color: #d4edda; color: #155724; }}
-        .moderate {{ background-color: #fff3cd; color: #856404; }}
-        .danger {{ background-color: #f8d7da; color: #721c24; }}
-        </style>
-        {safety_html}
-    """, unsafe_allow_html=True)
+# ----------- Batch CSV Prediction -----------
+st.markdown("### 📂 Upload CSV for Batch Prediction")
+uploaded_file = st.file_uploader("Upload CSV file (must include 'Distance', 'Charge', and 'Rock Type')", type=["csv"])
 
-# --- CSV UPLOAD FOR BATCH PREDICTION ---
-st.markdown("---")
-st.subheader("📂 Upload CSV for Batch Prediction")
-
-uploaded_file = st.file_uploader("Upload a CSV file (columns: Distance, Charge, Rock Type)", type="csv")
-
-if uploaded_file is not None:
+if uploaded_file:
     try:
         df = pd.read_csv(uploaded_file)
 
-        st.write("📄 Preview of Uploaded Data:")
-        st.dataframe(df.head())
+        # Normalize column names
+        df.columns = df.columns.str.strip().str.lower()
 
-        if all(col in df.columns for col in ['Distance', 'Charge', 'Rock Type']):
-            df['Rock Type Encoded'] = df['Rock Type'].apply(lambda x: 0 if x.lower() == 'coal' else 1)
-            df['Scaled Distance'] = df['Distance'] / np.sqrt(df['Charge'])
-            df['Distance x Charge'] = df['Distance'] * df['Charge']
-            df['Distance^2'] = df['Distance'] ** 2
-            df['Charge^2'] = df['Charge'] ** 2
+        required_cols = ['distance', 'charge', 'rock type']
+        if all(col in df.columns for col in required_cols):
 
-            feature_cols = ['Distance', 'Charge', 'Scaled Distance', 'Rock Type Encoded',
-                            'Distance x Charge', 'Distance^2', 'Charge^2']
-            df['Predicted PPV'] = model.predict(df[feature_cols])
-            df['Predicted PPV'] = df['Predicted PPV'].round(3)
+            # Drop extra columns
+            df_trimmed = df[required_cols].copy()
 
-            def classify(ppv):
-                if ppv < 5:
-                    return "Safe"
-                elif 5 <= ppv <= 10:
-                    return "Moderate"
-                else:
-                    return "Dangerous"
+            # Encode rock type
+            df_trimmed['rock'] = df_trimmed['rock type'].str.lower().map({'coal': 0, 'limestone': 1})
 
-            df['Safety Status'] = df['Predicted PPV'].apply(classify)
+            # Feature engineering
+            df_trimmed['scaled_distance'] = df_trimmed['distance'] / np.sqrt(df_trimmed['charge'])
+            df_trimmed['distance_x_charge'] = df_trimmed['distance'] * df_trimmed['charge']
+            df_trimmed['distance_squared'] = df_trimmed['distance'] ** 2
+            df_trimmed['charge_squared'] = df_trimmed['charge'] ** 2
 
-            st.success("✅ Predictions Generated")
-            st.dataframe(df[['Distance', 'Charge', 'Rock Type', 'Predicted PPV', 'Safety Status']])
+            X = df_trimmed[['distance', 'charge', 'scaled_distance', 'rock', 'distance_x_charge', 'distance_squared', 'charge_squared']]
+            df['Predicted PPV (mm/s)'] = model.predict(X).round(3)
 
-            csv_output = df.to_csv(index=False).encode('utf-8')
-            st.download_button("📥 Download Predictions", csv_output, "ppv_predictions.csv", "text/csv")
+            st.markdown("#### ✅ Preview with Predictions")
+            st.dataframe(df.head())
+
+            # Download button
+            output = BytesIO()
+            df.to_csv(output, index=False)
+            st.download_button(
+                label="📥 Download Predicted CSV",
+                data=output.getvalue(),
+                file_name="predicted_ppv_output.csv",
+                mime="text/csv"
+            )
         else:
-            st.error("❗ CSV must include 'Distance', 'Charge', and 'Rock Type' columns.")
-    except Exception as e:
-        st.error(f"❌ Error reading CSV: {e}")
+            st.error("CSV must include 'Distance', 'Charge', and 'Rock Type' columns.")
 
-# --- Footer ---
+    except Exception as e:
+        st.error(f"Error processing file: {e}")
+
+# Footer
 st.markdown("""
 <hr style="margin-top:50px;">
 <div style="text-align:center;color:gray;font-size:0.9em">
