@@ -2,26 +2,15 @@ import streamlit as st
 import numpy as np
 import joblib
 
-# Load the model
+# Load the trained XGBoost model
 model = joblib.load("final_xgboost_model.pkl")
 
-# Page config
+# Streamlit page configuration
 st.set_page_config(page_title="PPV Prediction | IIT BHU", layout="centered")
 
-# Background and logo
+# Page styling
 st.markdown("""
     <style>
-    .stApp {
-        background-image: url('background_image.jpg');
-        background-size: cover;
-        background-position: center;
-    }
-    .logo {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        width: 120px;
-    }
     .indicator {
         font-size: 1.2rem;
         font-weight: bold;
@@ -45,39 +34,36 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# IIT BHU Logo
-st.markdown('<img src="iit_bhu_logo.png" class="logo">', unsafe_allow_html=True)
-
-# Title
+# App title
 st.markdown("<h1 style='text-align: center;'>💥 Peak Particle Velocity Prediction</h1>", unsafe_allow_html=True)
 st.subheader("XGBoost-Based Blasting Evaluation Model")
 
-# Inputs
+# User inputs
 distance = st.number_input("📝 Distance from Blast (m)", min_value=1.0, value=100.0)
 charge = st.number_input("💣 Charge per Delay (kg)", min_value=1.0, value=50.0)
 rock_type = st.selectbox("🪨 Select Rock Type", ["Coal", "Limestone"])
-
-# Rock encoding
 rock = 0 if rock_type == "Coal" else 1
 
-# Prediction
+# Predict button logic
 if st.button("🧠 Predict PPV"):
     scaled_distance = distance / np.sqrt(charge)
     distance_x_charge = distance * charge
     distance_squared = distance ** 2
     charge_squared = charge ** 2
 
+    # Prepare feature array
     features = np.array([[
         distance, charge, scaled_distance, rock,
         distance_x_charge, distance_squared, charge_squared
     ]])
 
+    # Predict PPV
     predicted_ppv = model.predict(features)[0]
     ppv_value = round(predicted_ppv, 3)
-    
+
     st.success(f"📈 Predicted PPV: {ppv_value} mm/s")
 
-    # Safety Indicator
+    # Safety classification
     if ppv_value < 5:
         safety_html = '<div class="indicator safe">🟢 Safe Zone (PPV < 5 mm/s)</div>'
     elif 5 <= ppv_value <= 10:
@@ -86,3 +72,12 @@ if st.button("🧠 Predict PPV"):
         safety_html = '<div class="indicator danger">🔴 Danger Zone (PPV > 10 mm/s)</div>'
 
     st.markdown(safety_html, unsafe_allow_html=True)
+
+# Footer
+st.markdown("""
+<hr style="margin-top:50px;">
+<div style="text-align:center;color:gray;font-size:0.9em">
+    Built with ❤️ by <b>IIT BHU</b> Mining Engineering <br>
+    Powered by Streamlit + XGBoost
+</div>
+""", unsafe_allow_html=True)
